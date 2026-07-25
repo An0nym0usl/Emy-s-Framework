@@ -1,0 +1,80 @@
+RocketSimCuda GPU-less CPU parity harness (OPT-105)
+Host build: float32 kernels vs float64 reference. No CUDA, no GPU.
+Tolerances: REL_TOL=1e-04  ABS_FLOOR=1e-02  dt=1/120
+
+[numeric  ] ballistic_gravity_1t       : PASS
+    pos        maxAbs=2.72524e-05  maxRel=2.11e-08  -> ok
+    vel        maxAbs=1.0455e-05  maxRel=3.55e-08  -> ok
+
+[numeric  ] ballistic_gravity_120t     : PASS
+    pos        maxAbs=0.000144224  maxRel=1.27e-07  -> ok
+    vel        maxAbs=9.49353e-05  maxRel=2.71e-07  -> ok
+
+[numeric  ] ballistic_gravity_1440t    : PASS
+    pos        maxAbs=0.0984473  maxRel=2.39e-06  -> ok
+    vel        maxAbs=0.0780435  maxRel=1.04e-05  -> ok
+
+[numeric  ] ballistic_drag_120t        : PASS
+    pos        maxAbs=0.000267523  maxRel=1.95e-07  -> ok
+    vel        maxAbs=0.000487411  maxRel=7.48e-07  -> ok
+
+[numeric  ] ballistic_drag_600t        : PASS
+    pos        maxAbs=0.0043977  maxRel=8.28e-07  -> ok
+    vel        maxAbs=0.00657096  maxRel=2.31e-06  -> ok
+
+[numeric  ] ball_maxspeed_clamp        : PASS
+    vel        maxAbs=6.21193e-05  maxRel=2.37e-08  -> ok
+    |vel|=6000.0000 (target 6000.0)
+
+[invariant] ball_floor_bounce_120t     : PASS
+    bounced=1  minZ=93.15 (>=0.90)  E0=2195000.0 maxE=2195000.0 (<=2197195.0)  finalPos.z=923.81
+    invariants: bounced=ok noTunnel=ok noEnergyGain=ok
+
+[numeric  ] boost_accel_air_30t        : PASS
+    vel        maxAbs=4.43167e-05  maxRel=1.67e-07  -> ok
+    boost      maxAbs=2.53146e-05  maxRel=2.76e-07  -> ok
+
+[numeric  ] boost_accel_air_120t       : PASS
+    vel        maxAbs=0.00104344  maxRel=9.86e-07  -> ok
+    boost      maxAbs=0.000101258  maxRel=1.52e-06  -> ok
+
+[numeric  ] demo_respawn               : PASS
+    respawnTick=360 (expect 360)  timerTracksRef=ok  boost=33.333 pos.z=36.000
+
+[predicate] goal_detection_predicate   : PASS
+    pred=1 expect=1 ok : centered past line -> goal (blue scores)
+    pred=0 expect=0 ok : short of line -> no goal
+    pred=0 expect=0 ok : outside goal width -> no goal
+    pred=0 expect=0 ok : above crossbar -> no goal
+    pred=1 expect=1 ok : centered past line (orange end)
+
+[numeric  ] obs_kickoff_1v1            : PASS
+    obsLen=109 (ref 109)  maxAbs=3.53e-08  maxRel=6.89e-08 (idx 52)  -> ok
+
+[numeric  ] obs_midair_2v2             : PASS
+    obsLen=167 (ref 167)  maxAbs=5.96e-08  maxRel=2.69e-07 (idx 66)  -> ok
+
+[numeric  ] obs_post_bounce_inv        : PASS
+    obsLen=109 (ref 109)  maxAbs=3.97e-08  maxRel=4.71e-07 (idx 70)  -> ok
+
+[numeric  ] obs_demo                   : PASS
+    obsLen=109 (ref 109)  maxAbs=2.55e-08  maxRel=1.99e-07 (idx 98)  -> ok
+
+[numeric  ] obs_near_goal              : PASS
+    obsLen=109 (ref 109)  maxAbs=5.01e-08  maxRel=6.89e-08 (idx 2)  -> ok
+
+[numeric  ] continuous_action_parse    : PASS
+    passthrough maxAbs=0 (expect 0)  threshold mismatches=0 -> ok
+
+[numeric  ] continuous_action_apply_air_30t : PASS
+    vel        maxAbs=4.43167e-05  maxRel=1.67e-07  -> ok
+    boost      maxAbs=2.53146e-05  maxRel=2.76e-07  -> ok
+    parsed: boost=1 throttle=0.800  vel.x=264.5833 boost=91.6666
+
+[numeric  ] continuous_action_apply_air_120t : PASS
+    vel        maxAbs=0.00104344  maxRel=9.86e-07  -> ok
+    boost      maxAbs=0.000101258  maxRel=1.52e-06  -> ok
+    parsed: boost=1 throttle=0.800  vel.x=1058.3345 boost=66.6666
+
+=====================================================
+OVERALL: PASS

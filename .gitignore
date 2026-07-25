@@ -1,0 +1,105 @@
+# CMake
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+# Ninja
+.ninja*
+build.ninja
+
+# Build-related
+RocketSim.Dir/
+build/
+x86/
+x64/
+Release/
+Debug
+out/
+*.obj
+*.lib
+*.exe
+*.pdb
+*.ilk
+*.tmp
+*.pyd
+*.whl
+
+# Arena meshes: ignore elsewhere, keep runtime meshes in repo
+*.cmf
+!collision_meshes/**/*.cmf
+_share_out/
+checkpoints_*/
+*.zip
+
+# Raw binary files
+*.bin
+
+# Visual Studio (not using anything VS-related)
+.vs/
+*.vcxproj
+*.sln
+*.filters
+*.user
+CMakeSettings.json
+
+# Anything starting with three underscores
+___*
+
+# ML model files
+*.pt
+*.PT
+
+# Don't include libtorch if in local dir
+libtorch
+*.lt
+
+/checkpoints
+/wandb
+
+# Secrets / local env
+.env
+.env.*
+*.pem
+
+# Local-only custom reward packs — never commit
+GigaLearnCPP/RLGymCPP/src/RLGymCPP/Rewards/private/
+GigaLearnCPP/RLGymCPP/src/RLGymCPP/Rewards/*
+!GigaLearnCPP/RLGymCPP/src/RLGymCPP/Rewards/.gitkeep
+GigaLearnCPP/RLGymCPP/src/RLGymCPP/RewardCore/*_private.h
+GigaLearnCPP/RLGymCPP/src/RLGymCPP/RewardCore/Private*.h
+GigaLearnCPP/RLGymCPP/src/RLGymCPP/Rewards/*_private.h
+GigaLearnCPP/RLGymCPP/src/RLGymCPP/Rewards/Private*.h
+RocketSimCuda/src/*Private*.cuh
+RocketSimCuda/src/*_private.cuh
+local_custom_rewards_*/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.venv/
+venv/
+
+# AutoTrainer / train runtime clutter at repo root
+*.log
+_smoke_*.log*
+_smoke_*.txt
+smoke_*.txt
+autotrainer/dashboard_status.json
+autotrainer/**/runtime_overrides.json
+autotrainer/**/trainer_status.json
+autotrainer/**/orchestrator_state.json
+
+_share_out/
+checkpoints_*/
+*.zip

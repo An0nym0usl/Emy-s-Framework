@@ -1,0 +1,22 @@
+RLBotGUI - GigaLearnRL (C++)
+============================
+
+Path to config folder (Settings in RLBotGUI):
+  <repo>/rlbot
+  (i.e. the folder that contains this file and GigaLearnBot.cfg)
+
+Before playing, make sure these exist next to the built executable:
+  - build/Release/GigaLearnBot.exe
+  - build/Release/checkpoints/        (at least one valid checkpoint)
+  - build/Release/collision_meshes/   (RocketSim collision meshes)
+
+Match configs:
+  - rlbot_2v2.cfg   -> 4x GigaLearnRL bot (2v2)
+  - rlbot_1v1.cfg   -> 2x GigaLearnRL bot (1v1, same bot for testing)
+
+C++ server port: set in port.cfg (also copied next to the executable).
+
+If RLBotGUI shows "Could not find GigaLearnBot.cfg":
+  -> set the rlbot folder above again and reload the match.
+
+Recommended in-game FPS: 120 (or stable 240/360), vsync off.

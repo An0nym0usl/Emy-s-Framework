@@ -1,0 +1,77 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "windows-cuda",
+      "displayName": "Windows x64 - CUDA (Release)",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "windows-cpu",
+      "displayName": "Windows x64 - CPU only (Release)",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build-cpu",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Linux - Release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "windows-hip",
+      "displayName": "Windows x64 - AMD HIP SDK (Release)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-hip",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "GIGA_USE_CUDA_SIM": "ON",
+        "GIGA_GPU_BACKEND": "hip"
+      }
+    },
+    {
+      "name": "linux-rocm",
+      "displayName": "Linux - AMD ROCm / HIP (Release)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-rocm",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "GIGA_USE_CUDA_SIM": "ON",
+        "GIGA_GPU_BACKEND": "hip"
+      }
+    },
+    {
+      "name": "windows-cuda-gpu",
+      "displayName": "Windows x64 - CUDA + RocketSimCuda (Release)",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "GIGA_USE_CUDA_SIM": "ON",
+        "GIGA_GPU_BACKEND": "cuda"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "windows-cuda", "configurePreset": "windows-cuda", "configuration": "Release" },
+    { "name": "windows-cuda-gpu", "configurePreset": "windows-cuda-gpu", "configuration": "Release" },
+    { "name": "windows-cpu", "configurePreset": "windows-cpu", "configuration": "Release" },
+    { "name": "windows-hip", "configurePreset": "windows-hip" },
+    { "name": "linux-release", "configurePreset": "linux-release" },
+    { "name": "linux-rocm", "configurePreset": "linux-rocm" }
+  ]
+}

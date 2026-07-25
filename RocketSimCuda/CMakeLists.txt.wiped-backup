@@ -1,0 +1,43 @@
+cmake_minimum_required(VERSION 3.18)
+
+# Vendored, library-only build of RocketSimCuda for GigaLearnRL.
+# This intentionally builds ONLY the GPU simulator static library (and a tiny rollout example),
+# not the upstream parity/benchmark test targets (those reference external relative paths).
+# Enable from the root build with -DGIGA_USE_CUDA_SIM=ON (requires the CUDA toolkit).
+
+project(RocketSimCuda LANGUAGES CXX CUDA)
+
+find_package(CUDAToolkit REQUIRED)
+
+file(GLOB_RECURSE CUDA_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cu")
+file(GLOB_RECURSE CUDA_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cuh"
+                               "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
+
+add_library(RocketSimCuda STATIC ${CUDA_SOURCES} ${CUDA_HEADERS})
+
+target_include_directories(RocketSimCuda PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+# Include Blackwell (sm_120) for RTX 50-series; older arches kept for portability.
+set_target_properties(RocketSimCuda PROPERTIES
+    CUDA_STANDARD 17
+    CXX_STANDARD 17
+    CUDA_SEPARABLE_COMPILATION OFF
+    CUDA_ARCHITECTURES "75;86;89;120"
+)
+
+# Physics parity: disable FMA contraction so GPU arithmetic matches the reference RocketSim
+# operation-for-operation (same reasoning as upstream).
+target_compile_options(RocketSimCuda PRIVATE
+    $<$<COMPILE_LANGUAGE:CUDA>:--fmad=false>
+)
+
+target_link_libraries(RocketSimCuda PUBLIC CUDA::cudart)
+
+# Small standalone example that exercises the public API (init -> step -> build obs/rewards).
+# Verifies the library links and the rsc::RocketSimCudaBatch ABI is usable.
+add_executable(giga_cuda_rollout "${CMAKE_CURRENT_SOURCE_DIR}/examples/cuda_rollout.cpp")
+target_link_libraries(giga_cuda_rollout PRIVATE RocketSimCuda)
+set_target_properties(giga_cuda_rollout PROPERTIES
+    CXX_STANDARD 17
+    CUDA_ARCHITECTURES "75;86;89;120"
+)

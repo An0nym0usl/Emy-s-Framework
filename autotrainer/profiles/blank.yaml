@@ -1,0 +1,41 @@
+# Alias of default.
+name: blank
+description: |
+  Same as profile default: blank from-scratch.
+
+skill_emergence:
+  chase_min_steps: 150000000
+  foundation_min_steps: 800000000
+  advanced_min_steps: 2000000000
+  eval_interval_steps: 50000000
+  cooldown_after_change_steps: 100000000
+
+gates:
+  chase:
+    - metric: "Player/Ball Touch Ratio"
+      min: 0.10
+      weight: 1.0
+  foundation:
+    - metric: "Player/Ball Touch Ratio"
+      min: 0.15
+      weight: 1.0
+  advanced:
+    - metric: "Player/Ball Touch Ratio"
+      min: 0.18
+      weight: 1.0
+
+priorities:
+  - id: chase_basics
+    label: Ball touch and chase
+    rewards:
+      - GoalReward
+      - TouchBallReward
+      - VelocityPlayerToBallReward
+
+exploit_resistance: []
+
+sparring_ramp:
+  phase_0: 0.0
+  phase_1: 0.05
+  phase_2: 0.15
+  advanced_mature: 0.22

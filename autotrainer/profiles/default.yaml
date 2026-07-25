@@ -1,0 +1,39 @@
+name: default
+description: >
+  Neutral starter profile.
+  Replace this description and priorities with your bot goals.
+  See docs/CUSTOMIZE.md.
+skill_emergence:
+  chase_min_steps: 150000000
+  foundation_min_steps: 800000000
+  advanced_min_steps: 2000000000
+  eval_interval_steps: 50000000
+  cooldown_after_change_steps: 100000000
+gates:
+  chase:
+  - metric: Player/Ball Touch Ratio
+    min: 0.12
+    weight: 1.0
+  foundation:
+  - metric: Player/Ball Touch Ratio
+    min: 0.18
+    weight: 1.0
+  advanced:
+  - metric: Player/Ball Touch Ratio
+    min: 0.22
+    weight: 0.8
+  - metric: Player/In Air Ratio
+    min: 0.08
+    weight: 1.0
+priorities:
+- id: contact
+  label: Ball contact / chase
+  rewards:
+  - TouchBallReward
+  - VelocityPlayerToBallReward
+- id: scoring
+  label: Ball to goal / goals
+  rewards:
+  - VelocityBallToGoalReward
+  - GoalReward
+exploit_resistance: []

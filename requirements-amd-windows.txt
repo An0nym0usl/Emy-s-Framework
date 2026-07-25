@@ -1,0 +1,22 @@
+# Optional Python packages for AMD Windows (RX 6600 XT class)
+#
+# Does NOT accelerate GigaLearnBot.exe / C++ PPO — that uses C++ libtorch
+# (CPU on Win AMD). Real train gain: HIP gpuNative (tools\build_amd.bat)
+# + CPU PPO thread tuning (GIGA_TORCH_THREADS).
+#
+# torch-directml is Python PrivateUse1 only. Microsoft does not ship
+# libtorch+DirectML. Pin matches Microsoft Learn (up to PyTorch 2.3.1).
+#
+# Install (optional, separate venv recommended):
+#   python -m venv .venv-dml
+#   .venv-dml\Scripts\activate
+#   pip install -r requirements-amd-windows.txt
+#
+# Smoke:
+#   python -c "import torch, torch_directml; d=torch_directml.device(); print(d)"
+#
+# Docs: docs/DIRECTML.md  |  docs/AMD.md (handoff)  |  INIZIO_RAPIDO_IT.md
+
+torch==2.3.1
+torchvision==0.18.1
+torch-directml==0.2.4.dev240815

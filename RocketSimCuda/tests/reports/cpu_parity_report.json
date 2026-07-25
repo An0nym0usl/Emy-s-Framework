@@ -1,0 +1,161 @@
+{
+  "abs_floor": 0.01,
+  "exit_code": 0,
+  "harness": "RocketSimCudaCpuParity",
+  "overall": "PASS",
+  "rel_tol": 0.0001,
+  "scenarios": [
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": 2.72524e-05,
+      "max_rel": 3.55e-08,
+      "name": "ballistic_gravity_1t",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": 0.000144224,
+      "max_rel": 2.71e-07,
+      "name": "ballistic_gravity_120t",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": 0.0984473,
+      "max_rel": 1.04e-05,
+      "name": "ballistic_gravity_1440t",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": 0.000487411,
+      "max_rel": 7.48e-07,
+      "name": "ballistic_drag_120t",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": 0.00657096,
+      "max_rel": 2.31e-06,
+      "name": "ballistic_drag_600t",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": 6.21193e-05,
+      "max_rel": 2.37e-08,
+      "name": "ball_maxspeed_clamp",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "invariant",
+      "max_abs": null,
+      "max_rel": null,
+      "name": "ball_floor_bounce_120t",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": 4.43167e-05,
+      "max_rel": 2.76e-07,
+      "name": "boost_accel_air_30t",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": 0.00104344,
+      "max_rel": 1.52e-06,
+      "name": "boost_accel_air_120t",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": null,
+      "max_rel": null,
+      "name": "demo_respawn",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "predicate",
+      "max_abs": null,
+      "max_rel": null,
+      "name": "goal_detection_predicate",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": 3.53e-08,
+      "max_rel": 6.89e-08,
+      "name": "obs_kickoff_1v1",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": 5.96e-08,
+      "max_rel": 2.69e-07,
+      "name": "obs_midair_2v2",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": 3.97e-08,
+      "max_rel": 4.71e-07,
+      "name": "obs_post_bounce_inv",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": 2.55e-08,
+      "max_rel": 1.99e-07,
+      "name": "obs_demo",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": 5.01e-08,
+      "max_rel": 6.89e-08,
+      "name": "obs_near_goal",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": null,
+      "max_rel": null,
+      "name": "continuous_action_parse",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": 4.43167e-05,
+      "max_rel": 2.76e-07,
+      "name": "continuous_action_apply_air_30t",
+      "result": "PASS"
+    },
+    {
+      "deterministic": true,
+      "kind": "numeric",
+      "max_abs": 0.00104344,
+      "max_rel": 1.52e-06,
+      "name": "continuous_action_apply_air_120t",
+      "result": "PASS"
+    }
+  ]
+}

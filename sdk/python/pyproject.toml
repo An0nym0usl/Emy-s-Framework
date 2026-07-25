@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "giga-sdk"
+version = "1.0.0"
+description = "GigaLearnRL SDK: manage the checkpoint box and deploy the Rocket League bot"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{ name = "GigaLearnRL" }]
+dependencies = []
+
+[project.scripts]
+giga = "giga_sdk.cli:main"
+
+[tool.setuptools]
+packages = ["giga_sdk"]

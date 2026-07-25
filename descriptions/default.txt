@@ -1,0 +1,2 @@
+Neutral blank GigaLearnRL bot profile. Replace this text with your bot goals,
+strengths, and weaknesses so AutoTrainer can bias curriculum and rewards.

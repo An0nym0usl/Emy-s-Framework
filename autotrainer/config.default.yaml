@@ -1,0 +1,621 @@
+# AutoTrainer master configuration
+
+poll_interval_sec: 10
+
+profile: default
+
+# =============================================================================
+# FULL AUTONOMOUS CONTROL (default ON for from-scratch)
+# AutoTrainer freely tunes & persists: blank GPU reward weights, entropy,
+# policy/critic LR, gamma, eventAdvantageBoost, opponent pool / old-version %,
+# GPU reset mix, maxEpisodeDuration / no_touch, skill-eval after warmup.
+# C++ ReapplyPostApex reasserts these every iter over Apex.
+#
+# Opt-out:
+#   full_control: false          # keep SSL guide but do not force full reapply
+#   set GIGA_AT_READONLY=1       # brain observes only; C++ ignores overrides
+#   set GIGA_NO_AUTOTRAINER=1    # skip sidecar entirely
+# =============================================================================
+full_control: true
+
+# Legacy flat warmup (ssl_autonomy.*_warmup_steps below is authoritative)
+warmup_steps: 30000000
+
+
+
+# HYPERPOWER OP mode — competitive 4-agent PBT (quality) + ES + event-driven.
+
+# This is what the strongest RL systems use: multiple agents compete on quality,
+
+# losers copy winners' weights and mutate hyperparameters.
+
+op_mode:
+
+  enabled: true
+
+  competitive_pbt: true
+
+  competitive_agents: 10         # denser Elo tournament pressure (VRAM-aware; lower if OOM)
+
+  rotate_every_steps: 5000000    # faster tournament cadence (eval-harness aligned)
+
+  es_enabled: true
+
+  event_driven: true
+
+  blend: 0.42                    # lean on competitive agent genome; ES fine-tunes
+
+  force_interval_steps: 8000000
+
+  event_cooldown_steps: 2000000
+
+  seed: 42
+
+  # Multi-seed tournament bank (same seeds as optional periodic eval)
+  multi_seed: [7, 11, 19, 23, 29]
+
+  es:
+
+    sigma: 0.12
+
+    learning_rate: 0.12
+
+    population: 14
+
+  # Four-level hierarchy always-on (meta + PBT/NAS + league + env architect + DPP + shared replay)
+  four_level:
+
+    enabled: true
+
+    meta_gradients: true
+
+    env_architect: true
+
+    shared_replay: true
+
+    shared_replay_capacity: 28672
+
+    dpp_lambda: 0.22
+
+    nas_mutation_prob: 0.52
+
+
+
+# =============================================================================
+# SSL full-autonomy autopilot (master switch)
+# When on, AutoTrainer owns rewards + hypers + league + GPU resets + skill-eval
+# ramp and drives toward SSL-track pressure largely alone.
+# Default ON (especially with --from-scratch / GIGA_FROM_SCRATCH=1).
+# Opt out: GIGA_NO_SSL_AUTONOMY=1  or  enabled/full_control: false
+# SSL-track is a long-horizon schedule, not an instant rank claim.
+# =============================================================================
+ssl_autonomy:
+
+  enabled: true
+
+  full_control: true
+
+  auto_enable_from_scratch: true
+
+  # Boot keeps skill-eval / sparring OFF (fast iters); autonomy arms them after warmup
+  sparring_warmup_steps: 30000000
+
+  skill_eval_warmup_steps: 40000000
+
+  policy_versions_warmup_steps: 25000000
+
+  # Cap maxEpisodeDuration so POWER ≥400k path stays sane (don't set arenas to 50)
+  max_episode_duration_cap: 4.0
+
+  ssl_track:
+
+    approaching_rating: 1200
+
+    # Optional per-phase min timesteps (defaults in ssl_guide._SSL_TRACK)
+    # Aligned with gigalearn-guide.netlify.app: aerial@100M, late@500M
+    # phase_min_steps:
+    #   aerial: 100000000
+    #   mid: 250000000
+    #   late: 500000000
+    #   ssl_pressure: 1200000000
+
+
+
+# =============================================================================
+# legacy personal roadmap removed (optional classic schedule).
+# SSL guide below owns blank-shell reward/hyper schedules when AT is enabled.
+# =============================================================================
+
+# =============================================================================
+# SSL AutoTrainer guide (blank-shell friendly)
+# Opt out: enabled: false  (or GIGA_NO_AUTOTRAINER=1 / run_fresh_train.bat)
+# =============================================================================
+ssl_guide:
+
+  enabled: true
+
+  # ---------------------------------------------------------------------------
+  # Optional web-guide-inspired knobs (not required for blank discrete train)
+  # Disable: web_guide.enabled: false
+  # ---------------------------------------------------------------------------
+  web_guide:
+    enabled: true
+    early_lr: 0.0002              # guide early 2e-4 (mechanical)
+    mid_lr: 0.0001                # guide mid 1e-4
+    late_lr: 0.00007              # guide late <0.8e-4
+    gamma_bump_every_steps: 1250000000   # ~1–1.5B
+    gamma_bump: 0.0005            # conservative; never >0.002 per step
+    gamma_bump_max_extra: 0.0025
+    # Stage-1 multipliers × blank GPU bases (Goal 100, Touch 5, VelP2B 2)
+    stage1_goal_mult: 1.0
+    stage1_touch_mult: 1.0
+    stage1_strong_touch_mult: 1.0
+    stage2_goal_mult: 1.0
+    stage2_goal_peak: 1.0
+    stage2_strong_touch_mult: 1.0
+    # Action masking already pushes aerials — keep air HIGH but not spam-flip crazy
+    early_air_mult: 1.0
+    action_masked_air_scale: 1.0
+    vel_ball_to_goal_vs_player_ratio: 1.0
+    seed_starter_on_boot: true    # first apply = blank starter (Goal/Touch/VelP2B)
+    starter_seed_max_steps: 100000000
+    force_mask_entropy: true      # entropy over valid actions only
+    late_concede_scale: 1.0
+    # Action masking → flippy bots; soft-cut air mults when air high + touch weak (Kue tip)
+    spam_flip_threshold: 0.45
+    spam_flip_air_cut: 0.88
+
+  # §4 — Early touch / vel-to-ball → later goal weights (blank = identity multipliers)
+  # reward_weights are MULTIPLIERS on GPU bases (not absolute weights).
+  # Live-tuned via RuntimeRewardRegistry (named rewards in manifest only)
+  reward_shaping:
+    enabled: true
+    horizon_steps: 2000000000
+    early_touch_mult: 1.0
+    late_touch_mult: 1.0
+    early_goal_mult: 1.0
+    late_goal_mult: 1.0
+    stage1_goal_mult: 1.0        # used when web_guide on + mechanical track
+
+  # §5 — League sampling among sparring draws: 60% current / 30% old / 10% hardened
+  # Maps to opponent_pool_chance + train_against_old_chance (C++: experts first, then old, else self)
+  # Hardened = Nexto/Necto when OpponentPool has weights; else skip gracefully
+  # Re-applied AFTER Apex each iter when ssl_guide_post_apex is written (thin C++ hook)
+  league:
+    enabled: true
+    current: 0.60
+    old_exploiters: 0.30
+    hardened_experts: 0.10
+    chase_expert_scale: 0.0       # chase = mostly self-play
+    chase_old_scale: 0.15
+    foundation_expert_scale: 0.6
+    sps_safe_scale: 0.55          # soften mix on normal/default SPS-safe path
+    skill_tracker: true
+    # assume_hardened: true       # force; default auto-detect / allow C++ empty-pool skip
+    expert_weights:
+      nexto: 1.0
+      necto: 0.85
+
+  # §3 — Procedural fuzzy scenario mix → GPU SetResetCurriculum (kickoff/fuzzed/aerial)
+  # No wall-shot setter: aerial+fuzzed approximate awkward/high-ball states
+  scenarios:
+    enabled: true
+    horizon_steps: 2000000000
+
+  # §4 end — if avg reward + entropy flat, bump entropy / event boost / diversify resets
+  stagnation:
+    enabled: true
+    entropy_bump: 0.008
+    event_boost: 1.65
+    es_noise: 0.035
+    var_max: 0.75
+
+  # §2 — geometry heuristics + error_pressure state-ring replay (physics −1.5s)
+  # True ML intercept predictor still deferred
+  geometry:
+    log_heuristics: true
+
+
+
+wandb:
+
+  enabled: true
+
+  project: gigalearncpp
+
+  entity: null
+
+  history_window: 50
+
+
+
+llm:
+
+  enabled: false
+
+  provider: openai
+
+  model: gpt-4o-mini
+
+  api_key_env: OPENAI_API_KEY
+
+  review_every_evals: 4
+
+
+
+safety:
+
+  # Fail-closed: aggressive veto ON by default (GIGA_AT_SAFETY_OFF=1 to opt out)
+  aggressive: true
+
+  max_reward_multiplier: 3.0
+
+  # Floor for multipliers (Stage-1 Goal ~0.45; never need ~0.02 mute anymore)
+  min_reward_multiplier: 0.01
+
+  # Normal schedule ceiling; entropy_death recovery uses max_entropy_scale_recovery
+  max_entropy_scale: 0.04
+
+  # MUST be high enough for CRITICAL recovery spikes (was 0.04 → silent death)
+  max_entropy_scale_recovery: 0.35
+
+  min_entropy_scale: 0.005
+
+  min_entropy_scale_recovery: 0.08
+
+  max_var_max: 1.2
+
+  # SafetyGovernor hysteresis (Policy Entropy, discrete/masked)
+  entropy_red: 0.10
+
+  entropy_yellow: 0.12
+
+  # Soft exit / yellow when H ≥ this
+  entropy_recover_ok: 0.18
+
+  # Clear exit / green when H ≥ this for ok_streak
+  entropy_green: 0.25
+
+  recover_ok_cycles: 3
+
+  prolonged_red_cycles: 4
+
+  kl_explosion_threshold: 0.12
+
+
+
+# =============================================================================
+# Intelligence — Diagnose → Plan → Act (smarter AutoTrainer)
+# Each cycle: observe → one primary diagnosis → one coherent plan (cooldown) → act.
+# Priority: HARD_RECOVERY/safety > Diagnose/Plan > SSL > Meta.
+# Stops thrashing, muted=OP forever, Meta Update spam, reward-chase nudges.
+# Opt-out: intelligence.enabled: false  OR  set GIGA_AT_LEGACY=1
+# Meta / intelligence notes: docs/AUTO_TRAINER.md
+# =============================================================================
+intelligence:
+
+  enabled: true
+
+  diagnose_plan_act: true
+
+  cooldown_cycles: 8             # min AT cycles between major changes
+
+  cooldown_steps: 15000000       # min timesteps between major changes
+
+  plan_hold_steps: 50000000      # keep a plan active ~50M steps
+
+  epsilon_start: 0.10            # meta explore start (decays)
+
+  epsilon_min: 0.02
+
+  epsilon_decay: 0.97            # per scored episode
+
+  # Long credit: score after many AT cycles OR 1 Elo eval OR ~25M steps
+  score_horizon_cycles: 16
+
+  score_horizon_steps: 25000000  # ~1 periodic Elo window
+
+  score_min_elo_evals: 1         # credit after ≥1 Elo eval
+
+  score_material_threshold: 0.15 # skip Meta Update spam below this |score|
+
+  ban_oscillation: true          # ban opposite action (league_ease↔pressure)
+
+  oscillation_ban_cycles: 12
+
+  unmute_h_threshold: 0.5        # gradual OP unmute when H≥ this
+
+  unmute_streak: 3               # consecutive green healthy cycles
+
+  unmute_step: 0.25              # unmute level step per qualifying cycle
+
+  elo_stall_delta: 5.0           # Elo flat/down band
+
+  elo_stall_evals: 2             # consecutive flat evals → elo_stalled
+
+  vs_nexto_elo_floor: 1100.0
+
+  entropy_risk_threshold: 0.18
+
+  reward_var_threshold: 0.04
+
+
+
+# =============================================================================
+# Meta MLP — true small neural meta-model (state features → action logits)
+# Online REINFORCE from long-horizon outcomes. PyTorch if available else NumPy.
+# Falls back to contextual bandit when disabled / error.
+# Opt-out: meta_mlp.enabled: false  or  GIGA_NO_META_MLP=1  or  GIGA_AT_LEGACY=1
+# Meta / intelligence notes: docs/AUTO_TRAINER.md
+# =============================================================================
+meta_mlp:
+
+  enabled: true
+
+  backend: auto                  # auto | torch | numpy
+
+  hidden: 32
+
+  learning_rate: 0.001
+
+  temperature: 0.8
+
+  seed: 42
+
+
+
+# =============================================================================
+# A/B automatic plans — race two candidate windows; keep winner by Elo/stability
+# Opt-out: ab_plans.enabled: false  or  GIGA_NO_AB_PLANS=1  or  GIGA_AT_LEGACY=1
+# =============================================================================
+ab_plans:
+
+  enabled: true
+
+  horizon_cycles: 16             # score arm after N AT cycles
+
+  horizon_steps: 25000000        # or ~25M steps
+
+  min_elo_evals: 2               # need ≥2 Elo evals so window scores can differ
+
+  score_epsilon: 0.05            # |A-B|≤ε → tie (no eternal A wins)
+
+  tie_pause_after: 2             # consecutive ties → pause A/B
+
+  tie_pause_cycles: 48
+
+  seed: 42
+
+
+
+# =============================================================================
+# Coach summary — local heuristic every N cycles → coach_summary.txt
+# Optional LLM enrich if api key + llm.enabled (never blocks training).
+# Opt-out: coach.enabled: false  or  GIGA_NO_COACH=1
+# =============================================================================
+coach:
+
+  enabled: true
+
+  every_cycles: 75               # sparse; also writes on DIAGNOSE/PLAN change
+
+  only_on_plan_change: true
+
+  use_llm_if_available: true     # heuristic always; LLM only if key present
+
+
+
+# =============================================================================
+# Meta-learn — online contextual bandit (fallback / explore under intelligence)
+# Observes H / reward / SPS / phase / zone → picks mild override nudges →
+# scores after long credit → EMA preference update → persists meta_brain_state.json
+# Not a second PPO agent. Safety veto / entropy_death wins.
+# Under intelligence: meta is explore-only when diagnose says healthy/HOLD.
+# Opt-out: meta_learn.enabled: false  or  GIGA_NO_META_LEARN=1
+# Meta / intelligence notes: docs/AUTO_TRAINER.md
+# =============================================================================
+meta_learn:
+
+  enabled: true
+
+  score_every_cycles: 16         # long credit (intel score_horizon_* also apply)
+
+  score_horizon_steps: 25000000
+
+  score_min_elo_evals: 1
+
+  learning_rate: 0.25            # EMA α on action preferences
+
+  epsilon: 0.10                  # explore vs softmax exploit (decays)
+
+  epsilon_min: 0.02
+
+  epsilon_decay: 0.97
+
+  softmax_temperature: 0.45
+
+  entropy_nudge: 0.003           # ±entropy_scale step
+
+  lr_nudge_factor: 0.08           # multiplicative LR nudge
+
+  league_nudge: 0.03
+
+  reward_nudge: 0.08             # reward_weights relative mix
+
+  score_material_threshold: 0.15
+
+  ban_oscillation: true
+
+  action_cooldown_cycles: 3
+
+  seed: 42
+
+
+
+# =============================================================================
+# Periodic Elo / skill eval (interval only — never every training iter)
+# Cheap harness tournament vs old-version / Nexto / Necto (+ live Rating/*).
+# Feeds meta-bandit Elo signal + best_skill checkpoint.
+# Opt-out: periodic_eval.enabled: false  or  GIGA_NO_PERIODIC_EVAL=1
+# =============================================================================
+periodic_eval:
+
+  enabled: true
+
+  interval_steps: 25000000       # every ~25M steps (10–50M band)
+
+  every_autotrainer_cycles: 0    # optional: also every N AutoTrainer ticks (0=off)
+
+  seeds: [7, 11, 19, 23, 29, 31, 37]
+
+  max_seeds: 9
+
+  max_candidates: 12
+
+  live_skill_blend: 0.40         # blend C++ Rating/* into Elo when present
+
+  report_name: eval_report_periodic.json
+
+
+
+# =============================================================================
+# Teachers after warmup — expert sparring + same-arch soft BC distill
+# When H stable: opponent pool (Nexto/Necto) + guiding BC if same-arch teacher exists.
+# OFF during entropy death / red. Opt-out: teachers.enabled: false  or  GIGA_NO_TEACHERS=1
+# =============================================================================
+teachers:
+
+  enabled: true
+
+  # defaults to ssl_autonomy.sparring_warmup_steps when omitted
+  # warmup_steps: 30000000
+
+  min_entropy: 0.18              # must match / exceed safety.entropy_recover_ok
+
+  intensity: 0.55
+
+  pool_chance: 0.06
+
+  old_chance_floor: 0.10
+
+  bc_distill: true               # mid-run PPO guiding BC (same-arch only)
+
+  distill_coef: 0.05             # light BC strength (capped ≤0.12) — SPS-safe
+
+  # Soft-distill / best_skill teacher — OFF by default (opt-in later).
+  best_skill_teacher: false
+
+  best_skill_continuous: false
+
+  best_skill_always: false
+
+  best_skill_elo_drop: 3.0
+
+  best_skill_distill_bump: 1.25
+
+  # Optional same-arch teacher (POLICY.lt + SHARED_HEAD.lt) — relative to Release
+  # bc_teacher_path: checkpoints
+
+  expert_weights: {}
+
+
+
+# =============================================================================
+# Best-by-skill checkpoint box — OFF by default
+# Opt-in: best_skill.enabled: true
+# =============================================================================
+best_skill:
+
+  enabled: false
+
+  subdir: best_skill
+
+  min_improve: 1.0
+
+
+
+# =============================================================================
+# Error-pressure + real savestate replay (−1.5s state ring when CUDA available)
+# On reward crash / no-touch / concede-ish → sticky GPU reset mix + ring restore+fuzz.
+# Restores arena physics only (not full RL traj). Opt-out below.
+# Opt-out: error_pressure.enabled: false  or  GIGA_NO_ERROR_PRESSURE=1
+#          state_replay: false  or  GIGA_NO_STATE_REPLAY=1  → curriculum only
+# =============================================================================
+error_pressure:
+
+  enabled: true
+
+  state_replay: true             # real CudaEnvSet ring restore (not curriculum-only)
+
+  window_steps: 8000000
+
+  touch_floor: 0.06
+
+  kickoff: 0.22
+
+  fuzzed: 0.45
+
+  aerial: 0.33
+
+  no_touch_seconds: 4.0
+
+  old_chance: 0.12
+
+  ring_depth: 10
+
+  ring_capture_every: 3
+
+  replay_frac: 0.05              # ≤5% of arenas (hard-capped in C++)
+
+  replay_max_arenas: 64          # never restore hundreds of arenas per trigger
+
+  replay_min_steps: 15000000     # cooldown between restores
+
+  replay_max_per_window: 3       # max restores per sticky error-pressure window
+
+  replay_lookback: 7
+
+  replay_fuzz: 1.0
+
+
+
+# =============================================================================
+# Dashboard / visualizer companion removed (not needed for train).
+# Keys kept so old overrides do not crash YAML loaders; writes are no-ops.
+# =============================================================================
+dashboard:
+
+  enabled: false
+
+  html_name: dashboard.html
+
+  history_cap: 2000
+
+  visualizer_watch: false
+
+  visualizer_stale_s: 8
+
+  visualizer_log_interval_s: 15
+
+
+
+rollback:
+
+  enabled: true
+
+  reward_drop_threshold: 0.15
+
+  touch_ratio_drop_threshold: 0.03
+
+
+
+logging:
+
+  # Default OFF — apply() prints one rich cycle line; JSON patch dumps only with --verbose
+  verbose: false
+
+  print_banner: true
+
+  # Loud REWARD CRASH when Average Step Reward drops this fraction vs rolling baseline
+  # (25–40% band; default mid). Independent of rollback.reward_drop_threshold (0.15).
+  reward_crash_drop: 0.30

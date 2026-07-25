@@ -1,0 +1,6 @@
+pyyaml>=6.0
+wandb>=0.16.0
+openai>=1.0.0
+numpy>=1.24.0
+# Optional: PyTorch unlocks meta_mlp torch backend (falls back to NumPy MLP)
+# torch>=2.0.0
