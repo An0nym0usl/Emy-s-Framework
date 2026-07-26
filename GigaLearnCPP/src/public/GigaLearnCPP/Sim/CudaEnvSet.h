@@ -41,7 +41,10 @@ namespace GGL {
 		int obsSize = 0;
 		int actionCount = 0;
 		bool gpuNative = true; // BuildAdvancedObs + GPU rewards/terminals (no per-arena CPU bridge)
-		int rewardProfile = 0; // 0=chase SE, 1=default-approx
+		int rewardProfile = 0; // 0=chase SE, 1=Wazne 2v2 roadmap
+		// Wazne reward phase (profile 1 only): 0 start, 1 no-Face@1B, 2 +Kickoff@1.5B,
+		// 3 zero-sum Touch@2B, 4 +PickupBoost@2.5B. Hot-applied via ApplyRuntimeGpuRewards.
+		int waznePhase = 0;
 		float noTouchSeconds = 4.f;
 		// When true, StepDiscrete skips host obs/mask/reward/terminal copies (device ptrs for Infer/bank).
 		// Also disables per-kernel cudaDeviceSynchronize (chain + sync once before Infer).

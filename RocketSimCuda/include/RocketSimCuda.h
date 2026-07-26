@@ -277,9 +277,10 @@ public:
     // Reset all arenas
     void ResetAllArenas();
 
-    // GPU-native state curriculum (kickoff / fuzzed / aerial-ish). Weights are relative.
-    // Default is pure kickoff (1,0,0) — matches prior ResetArena behavior.
-    void SetResetCurriculum(float kickoffW, float fuzzedW, float aerialW);
+    // GPU-native state curriculum (kickoff / fuzzed / aerial / ball-chase). Weights are relative.
+    // Default is pure kickoff (1,0,0,0) — matches prior ResetArena behavior.
+    // chaseW: cars near ball on ground facing it (dense VelPlayerToBall gradient).
+    void SetResetCurriculum(float kickoffW, float fuzzedW, float aerialW, float chaseW = 0.f);
 
     // --- Per-tick operations ---
 
@@ -419,6 +420,7 @@ private:
     float m_resetKickoffW = 1.f;
     float m_resetFuzzedW = 0.f;
     float m_resetAerialW = 0.f;
+    float m_resetChaseW = 0.f;
     uint32_t m_resetRng = 0xC0FFEEu;
 
     // GPU device pointers (opaque to the public header)

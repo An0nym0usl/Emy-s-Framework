@@ -621,11 +621,12 @@ void GGL::Learner::Save() {
 	std::filesystem::create_directories(saveFolder);
 
 	RG_LOG("Saving to folder " << saveFolder << "...");
+	Timer saveTimer = {};
 	// Models first, stats last — avoids a numbered folder with corrupt/empty RUNNING_STATS.json
 	ppo->SaveTo(saveFolder);
 	SaveStats(saveFolder / STATS_FILE_NAME);
 
-	// Remove old checkpoints
+	// Remove old checkpoints (optional — mid-train delete often hangs under AV/OneDrive)
 	if (config.checkpointsToKeep != -1) {
 		std::set<int64_t> allSavedTimesteps = Utils::FindNumberedDirs(config.checkpointFolder);
 		while (allSavedTimesteps.size() > config.checkpointsToKeep) {
@@ -637,16 +638,21 @@ void GGL::Learner::Save() {
 			try {
 				std::filesystem::remove_all(removePath);
 			} catch (std::exception& e) {
-				RG_ERR_CLOSE("Failed to remove old checkpoint from " << removePath << ", exception: " << e.what());
+				// OneDrive / AV locks must not kill training mid-save.
+				RG_LOG("Warning: could not remove old checkpoint " << removePath
+					<< " (" << e.what() << ") - continuing");
+				allSavedTimesteps.erase(lowestCheckpointTS);
+				break;
 			}
 			allSavedTimesteps.erase(lowestCheckpointTS);
 		}
 	}
 
-	if (versionMgr)
+	// Only flush policy_versions when that feature is actually enabled (otherwise disk thrash).
+	if (versionMgr && config.savePolicyVersions)
 		versionMgr->SaveVersions();
 
-	RG_LOG(" > Done.");
+	RG_LOG(" > Done. (" << (saveTimer.Elapsed() * 1000.0) << "ms)");
 }
 
 void GGL::Learner::Load() {
@@ -1048,7 +1054,7 @@ void GGL::Learner::StartTransferLearn(const TransferLearnConfig& tlConfig) {
 			if (totalDiscreteToContinuousRolloutActions > 0)
 				report["Student Rollout Ratio"] = studentRolloutActionsUsed / (float)totalDiscreteToContinuousRolloutActions;
 
-			if (versionMgr)
+			if (versionMgr && (config.savePolicyVersions || config.skillTracker.enabled))
 				versionMgr->OnIteration(ppo, report, totalTimesteps, prevTimesteps);
 
 			if (saveQueued) {
@@ -1306,7 +1312,10 @@ void GGL::Learner::FlushDeferredRuntimeSubsystems() {
 
 	if (doPvm && wantVersionMgr && !config.checkpointFolder.empty()) {
 		if (!versionMgr) {
-			config.savePolicyVersions = true; // versions folder required for league/eval
+			// Disk SaveVersions only when league/old-versions need persistence.
+			// Skill-rating alone keeps versions in RAM (avoids mid-train freezes).
+			if (config.trainAgainstOldVersions)
+				config.savePolicyVersions = true;
 			RG_LOG("Learner: flushing deferred PolicyVersionManager create "
 				<< "(skill=" << (config.skillTracker.enabled ? 1 : 0)
 				<< " old=" << (config.trainAgainstOldVersions ? 1 : 0)
@@ -2554,7 +2563,7 @@ void GGL::Learner::Start() {
 				report["Total Timesteps"] = totalTimesteps;
 				report["Total Iterations"] = totalIterations;
 
-				if (versionMgr)
+				if (versionMgr && (config.savePolicyVersions || config.skillTracker.enabled))
 					versionMgr->OnIteration(ppo, report, totalTimesteps, prevTimesteps);
 
 				bool quitAfterSave = false;

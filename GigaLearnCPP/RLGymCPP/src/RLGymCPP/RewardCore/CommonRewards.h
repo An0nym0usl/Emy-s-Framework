@@ -1,6 +1,7 @@
 #pragma once
 #include "Reward.h"
 #include "../Math.h"
+#include <cmath>
 
 namespace RLGC {
 
@@ -148,6 +149,38 @@ namespace RLGC {
 	public:
 		virtual float GetReward(const Player& player, const GameState& state, bool isFinal) override {
 			return !player.isOnGround;
+		}
+	};
+
+	// Closest-to-ball on kickoff (positive if closer than any opponent, else negative).
+	class KickoffProximityReward : public Reward {
+	public:
+		virtual float GetReward(const Player& player, const GameState& state, bool isFinal) override {
+			constexpr float KICKOFF_POS_XY_TOLERANCE = 1.0f;
+			if (std::abs(state.ball.pos.x) >= KICKOFF_POS_XY_TOLERANCE
+				|| std::abs(state.ball.pos.y) >= KICKOFF_POS_XY_TOLERANCE)
+				return 0.0f;
+
+			float playerDistSq = (player.pos - state.ball.pos).LengthSq();
+			float minOpponentDistSq = -1.f;
+
+			for (const auto& otherPlayer : state.players) {
+				if (otherPlayer.carId == player.carId)
+					continue;
+				if (otherPlayer.team == player.team)
+					continue;
+				float d = (otherPlayer.pos - state.ball.pos).LengthSq();
+				if (minOpponentDistSq < 0.f || d < minOpponentDistSq)
+					minOpponentDistSq = d;
+			}
+
+			if (minOpponentDistSq < 0.f)
+				return 1.0f;
+			if (playerDistSq < minOpponentDistSq)
+				return 1.0f;
+			if (playerDistSq > minOpponentDistSq)
+				return -1.0f;
+			return 0.0f;
 		}
 	};
 

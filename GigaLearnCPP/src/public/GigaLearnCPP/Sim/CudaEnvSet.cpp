@@ -83,20 +83,46 @@ void GGL::CudaEnvSet::ConfigureGpuTrainingRewards() {
 	};
 
 	if (rewardProfile == 1) {
-		// Default from-scratch GPU stack — blank default template.
-		// Add your own IDs/weights here (or via AutoTrainer reward_weights).
-		// Optional community reward IDs exist in RocketSimCuda but are NOT defaults.
-		add(rsc::TrainingRewardID::GOAL_REWARD, 100.f);
-		add(rsc::TrainingRewardID::TOUCH_BALL, 5.f, true);
-		add(rsc::TrainingRewardID::VELOCITY_BALL_TO_GOAL, 10.f, true);
-		add(rsc::TrainingRewardID::VELOCITY_PLAYER_TO_BALL, 2.f);
+		// 2v2 Wazne roadmap (mirror BuildDefault2v2Rewards / ApplyWazne2v2Roadmap).
+		// Early (phase 0): dense drive-to-ball, NO Air (Air+1s truncates → jump spam).
+		// params[0] on GOAL_REWARD = concedeScale (-0.80).
+		{
+			if (rc.numEntries < rsc::MAX_TRAINING_REWARD_ENTRIES) {
+				float scaled = 150.f * GpuRewardMult(rsc::TrainingRewardID::GOAL_REWARD);
+				if (!std::isfinite(scaled)) scaled = 150.f;
+				scaled = (std::max)(-1e6f, (std::min)(1e6f, scaled));
+				rc.entries[rc.numEntries].id = rsc::TrainingRewardID::GOAL_REWARD;
+				rc.entries[rc.numEntries].weight = scaled;
+				rc.entries[rc.numEntries].params[0] = -0.80f;
+				rc.entries[rc.numEntries].isZeroSum = 0;
+				rc.numEntries++;
+			}
+		}
+		const bool zeroSumTouch = waznePhase >= 3; // 2.0B+
+		if (waznePhase < 1) {
+			// Motor-skills start: strong dense chase heads (public CommonRewards IDs).
+			add(rsc::TrainingRewardID::TOUCH_BALL, 12.f, false);
+			add(rsc::TrainingRewardID::FACE_BALL, 3.f);
+			add(rsc::TrainingRewardID::VELOCITY_PLAYER_TO_BALL, 10.f);
+			add(rsc::TrainingRewardID::VELOCITY_BALL_TO_GOAL, 5.f);
+		} else {
+			add(rsc::TrainingRewardID::TOUCH_BALL, 5.f, zeroSumTouch);
+			add(rsc::TrainingRewardID::VELOCITY_PLAYER_TO_BALL, 1.f);
+			add(rsc::TrainingRewardID::VELOCITY_BALL_TO_GOAL, 5.f);
+			add(rsc::TrainingRewardID::AIR, 0.15f); // aerial after drive basics
+			if (waznePhase >= 2) // KickoffProximity @ 1.5B
+				add(rsc::TrainingRewardID::KICKOFF_PROXIMITY, 1.f);
+			if (waznePhase >= 4) // PickupBoost @ 2.5B
+				add(rsc::TrainingRewardID::PICKUP_BOOST, 50.f);
+		}
 	} else {
-		// Dense chase stack (GPU-native IDs) — SE weapon vs Leak Goal=400.
-		add(rsc::TrainingRewardID::VELOCITY_PLAYER_TO_BALL, 10.f);
-		add(rsc::TrainingRewardID::FACE_BALL, 3.f);
-		add(rsc::TrainingRewardID::TOUCH_BALL, 18.f);
+		// Dense chase stack (from-scratch motor skills). No Air — Air+short horizons
+		// collapses to jump spam. Goal/Touch/Vel*/Face are real non-zero CUDA IDs.
+		add(rsc::TrainingRewardID::VELOCITY_PLAYER_TO_BALL, 12.f);
+		add(rsc::TrainingRewardID::FACE_BALL, 4.f);
+		add(rsc::TrainingRewardID::TOUCH_BALL, 22.f);
 		add(rsc::TrainingRewardID::VELOCITY_BALL_TO_GOAL, 2.f);
-		add(rsc::TrainingRewardID::GOAL_REWARD, 25.f);
+		add(rsc::TrainingRewardID::GOAL_REWARD, 20.f);
 	}
 	batch->ConfigureTrainingRewards(rc);
 

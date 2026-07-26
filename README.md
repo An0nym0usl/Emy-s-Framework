@@ -98,6 +98,7 @@ CUDA kickoff spawn orientation was aligned with RocketSim (orange mirror); see [
 | [`BUILD.md`](BUILD.md) | Windows rebuild / `cmake not in PATH` |
 | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Common errors |
 | [`docs/CUDA_SIM.md`](docs/CUDA_SIM.md) | RocketSimCuda / spawn notes |
+| [`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md) | pure80 / hyperpower / continue-leak |
 
 ---
 
@@ -105,17 +106,30 @@ CUDA kickoff spawn orientation was aligned with RocketSim (orange mirror); see [
 
 ```
 SETUP_FIRST_RUN.bat
-run_fresh_train.bat          # AutoTrainer off
+run_fresh_train.bat          # AutoTrainer off (default POWER path)
 run_with_autotrainer.bat
-src/                         # ExampleMain (TRAINING SIZE knobs)
+src/
+  ExampleMain_mod.cpp        # slim product entry (GigaLearnBot)
+  TrainProfiles.h            # TRAINING SIZE / CudaPower knobs
+  TrainCli.*                 # flag parse + mode resolve
+  TrainEnv.*                 # rewards, env create, curriculum
+  TrainHw.*                  # hw_probe / amd_win_20k / AutoTrainer spawn
+RocketSimCuda/src/
+  RocketSimCuda.cu           # thin aggregator
+  RocketSimCuda{Physics,Obs,Rewards,Api,…}.cuh
 GigaLearnCPP/
-RocketSimCuda/
 autotrainer/                 # optional
 collision_meshes/
 opponents/                   # empty pool by default
 build/Release/               # GigaLearnBot.exe + DLLs
 docs/
+  EXPERIMENTAL.md            # pure80 / hyperpower / continue-leak
 ```
+
+**Default path (product):** blank from-scratch POWER train — `GigaLearnBot.exe` / `--from-scratch`.  
+**Kept critical:** RocketSimCuda gpuNative, PPO loop, chase learning fixes (maxEp, VelP2B, no Air farming), optional Leak-style console.  
+**Secondary / experimental:** `--pure80`, `--hyperpower`, `--continue-leak` — see [`docs/EXPERIMENTAL.md`](docs/EXPERIMENTAL.md).  
+**Not in repo:** private reward packs (slater/mkh/…).
 
 Build (NVIDIA):
 

@@ -516,8 +516,10 @@ void GGL::PolicyVersionManager::SyncSkillConfig(
 }
 
 void GGL::PolicyVersionManager::OnIteration(PPOLearner* ppo, Report& report, int64_t totalTimesteps, int64_t prevTotalTimesteps) {
-	if ((totalTimesteps / tsPerVersion > prevTotalTimesteps / tsPerVersion) || (prevTotalTimesteps == 0)) {
-		// Save version
+	// Snapshot current policy into the in-memory pool (needed for Elo vs old self).
+	if (tsPerVersion > 0
+		&& ((totalTimesteps / (int64_t)tsPerVersion > prevTotalTimesteps / (int64_t)tsPerVersion)
+			|| (prevTotalTimesteps == 0 && versions.empty()))) {
 		AddVersion(ppo->GetPolicyModels(), totalTimesteps);
 	}
 

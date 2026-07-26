@@ -81,6 +81,11 @@ GGL::MetricSender::MetricSender(std::string _projectName, std::string _groupName
 }
 
 void GGL::MetricSender::Send(const Report& report) {
+	// Calling into Python every iter contends for the GIL. Log sparsely; always log #1.
+	++sendCounter;
+	if (sendEveryN > 1 && sendCounter != 1 && (sendCounter % sendEveryN) != 0)
+		return;
+
 	py::dict reportDict = {};
 
 	for (auto& pair : report.data)
@@ -89,7 +94,7 @@ void GGL::MetricSender::Send(const Report& report) {
 	try {
 		pyMod.attr("add_metrics")(reportDict);
 	} catch (std::exception& e) {
-		RG_ERR_CLOSE("MetricSender: Failed to add metrics, exception: " << e.what());
+		RG_LOG("MetricSender: add_metrics failed (continuing train): " << e.what());
 	}
 }
 
